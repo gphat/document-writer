@@ -1,5 +1,8 @@
 Revision history for Document-Writer
 
+0.03
+  - Forget to make manifest
+
 0.02
   - Add MockDriver for testing
   - Add TextLayout for turning arbitrary text into TextBoxes

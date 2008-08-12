@@ -9,7 +9,7 @@ use Paper::Specs units => 'pt';
 use Document::Writer::TextLayout;
 
 our $AUTHORITY = 'cpan:GPHAT';
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 has 'current_page' => (
     is => 'rw',

@@ -12,11 +12,15 @@ inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/Document/Writer.pm
 lib/Document/Writer/Page.pm
+lib/Document/Writer/TextLayout.pm
 Makefile.PL
 MANIFEST			This list of files
 META.yml
 README
 t/00-load.t
 t/001-document.t
+t/002-flowing.t
+t/002-layout.t
+t/lib/MockDriver.pm
 t/pod-coverage.t
 t/pod.t
