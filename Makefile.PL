@@ -12,7 +12,8 @@ requires 'Forest' => '0.02';
 requires 'Layout::Manager' => '0.10';
 requires 'Moose' => '0.54';
 requires 'MooseX::AttributeHelpers' => '0.12';
-requires 'Paper::Spec' => '0.10';
+requires 'Paper::Specs' => '0.10';
+requires 'Text::Flow' => '0.01';
 
 auto_install;
 

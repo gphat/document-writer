@@ -1,5 +1,15 @@
 Revision history for Document-Writer
 
+0.02
+  - Add MockDriver for testing
+  - Add TextLayout for turning arbitrary text into TextBoxes
+  - Page: Lazily build pieces
+  - Rename turn_page to next_page
+  - Add current_page attribute
+  - Add add_text_to_page
+  - Add add_to_age
+  - Add draw convenience method
+
 0.01    Date/time
         First version, released on an unsuspecting world.
 

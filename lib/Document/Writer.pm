@@ -6,8 +6,15 @@ use Carp;
 use Forest;
 use Paper::Specs units => 'pt';
 
+use Document::Writer::TextLayout;
+
 our $AUTHORITY = 'cpan:GPHAT';
-our $VERSION = '0.01';
+our $VERSION = '0.02';
+
+has 'current_page' => (
+    is => 'rw',
+    isa => 'Num',
+);
 
 has 'pages' => (
     metaclass => 'Collection::Array',
@@ -23,6 +30,127 @@ has 'pages' => (
         'last' => 'last_page'
     }
 );
+
+sub add_text_to_page {
+    my ($self, $driver, $font, $text, $color) = @_;
+
+    my $curr_page = $self->get_page($self->current_page);
+    # TODO Orientation...
+
+    my $width = $curr_page->inside_width;
+
+    my $tl = Document::Writer::TextLayout->new(
+        font => $font,
+        text => $text,
+        width => $width
+    );
+
+    $tl->layout($driver);
+
+    my $used = 0;
+    my $tlh = $tl->height;
+
+    $curr_page->prepare;
+    $curr_page->do_layout($curr_page);
+
+    while($used < $tlh) {
+        my $avail = $curr_page->body->inside_height - $curr_page->body->layout_manager->used->[1];
+        if($avail <= 0) {
+            $curr_page = $self->next_page;
+            $curr_page->prepare;
+            $curr_page->layout_manager->do_layout($curr_page);
+            next;
+        }
+        my $lsize = $avail;
+        if($tlh < $used + $avail) {
+            $lsize = $tlh - $used;
+        }
+        my $lines = $tl->slice($used, $lsize);
+
+        if($lines->{size} <= 0) {
+            # If we get back nothing then we must've asked for a size too
+            # small to get back data.  Make a new page
+            $curr_page = $self->next_page;
+            $curr_page->prepare;
+            $curr_page->layout_manager->do_layout($curr_page);
+            next;
+        }
+
+        my $tb = Graphics::Primitive::TextBox->new(
+            color => defined($color) ? $color : $curr_page->color,
+            font => $font,
+            lines => $lines->{lines},
+            minimum_width => $curr_page->width,
+            minimum_height => $lines->{size}
+        );
+        $tb->background_color(Graphics::Color::RGB->new(red => rand(1), green => rand(1), blue => rand(1), alpha => .25));
+        $curr_page->body->add_component($tb);
+        $curr_page->prepare;
+        $curr_page->layout_manager->do_layout($curr_page);
+        $used += $lines->{size};
+    }
+}
+
+sub add_to_page {
+    my ($self, $driver, $thing) = @_;
+
+    return unless defined($thing);
+
+    # If current_page isn't set, assume they want to operate on the last page.
+    unless(defined($self->current_page)) {
+        $self->current_page(scalar(@{ $self->pages }) - 1);
+    }
+    unless(defined($self->current_page)) {
+        # Well, shit. We still don't have a page.  Bitch about it since we
+        # can't create one without a size.
+        croak('No pages to add to.');
+    }
+
+    my $page = $self->get_page($self->current_page);
+    croak 'current_page refers to an undefined page' unless defined($page);
+
+    if(ref($thing)) {
+        # $thing->prepare($driver);
+    } else {
+        # my $tb = Graphics::Primitive::TextBox->new(
+        #     # TODO FIX ME
+        #     color => Graphics::Color::RGB->new(red => 0, green => 0, blue => 0, alpha => 1),
+        #     text => $thing,
+        #     minimum_width => $page->inside_width
+        # );
+        # $thing = $tb;
+        # $tb->prepare($driver);
+    }
+
+    $page->body->add_component($thing);
+    $page->prepare;
+    $page->layout_manager->do_layout($page);
+
+    # TODO FIx avail and new page!
+
+    # if($page->layout_manager->overflow) {
+    #     # We overflowed.  Time to move to the next page and try there.
+    #     $page->pop_component;
+    #     $self->next_page;
+    #     $self->add_to_page($thing);
+    # }
+}
+
+sub draw {
+    my ($self, $driver, $name) = @_;
+
+    foreach my $p (@{ $self->pages }) {
+        # Prepare all the pages...
+        $driver->prepare($p);
+        # Layout each page...
+        if($p->layout_manager) {
+            $p->layout_manager->do_layout($p);
+        }
+        $driver->pack($p);
+        $driver->reset;
+        $driver->draw($p);
+    }
+}
 
 sub find_page {
     my ($self, $name) = @_;
@@ -56,18 +184,27 @@ sub get_tree {
     return $tree;
 }
 
-sub turn_page {
+sub next_page {
     my ($self, $width, $height) = @_;
+
+    if(defined($self->current_page)) {
+        my $epage = $self->pages->[$self->current_page + 1];
+        if(defined($epage)) {
+            $self->current_page($self->current_page + 1);
+            return $epage;
+        }
+    }
 
     my $newpage;
     if($width && $height) {
-       $newpage = Document::Writer::Page->new(
-           width => $width, height => $height
-       );
+        $newpage = Document::Writer::Page->new(
+            width => $width, height => $height
+        );
     } else {
         my $currpage = $self->last_page;
         if($currpage) {
             $newpage = Document::Writer::Page->new(
+                color => $currpage->color,
                 width => $currpage->width, height => $currpage->height
             );
         } else {
@@ -75,24 +212,8 @@ sub turn_page {
         }
     }
     $self->add_page($newpage);
+    $self->current_page(scalar(@{ $self->pages }) - 1);
     return $newpage;
-}
-
-sub write {
-    my ($self, $driver, $name) = @_;
-
-    foreach my $p (@{ $self->pages }) {
-        # Prepare all the pages...
-        $driver->prepare($p);
-        # Layout each page...
-        if($p->layout_manager) {
-            $p->layout_manager->do_layout($p);
-        }
-        $driver->pack($p);
-        $driver->reset;
-        $driver->draw($p);
-    }
-    $driver->write($name);
 }
 
 1;
@@ -103,14 +224,39 @@ Document::Writer - Library agnostic document creation
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
     use Document::Writer;
+    # Use whatever you like
+    use Graphics::Primitive::Driver::Cairo;
 
-    my $foo = Document::Writer->new;
-    ...
+    my $doc = Document::Writer->new;
+    # Create the first page
+    my $p = $doc->next_page(Document::Writer->get_paper_dimensions('letter'));
+    # ... Do something
+    my $p2 = $doc->next_page;
+    # ... Do some other stuff
+    $self->draw($driver);
+    $driver->write('/Users/gphat/foo.pdf');
+
+=head1 DESCRIPTION
+
+Document::Writer is a document creation library that is built on the
+L<Graphics::Primitive> stack.  It aims to provide convenient abstractions for
+creating documents and a library-agnostic base for the embedding of other
+components that use Graphics::Primitive.
+
+When you create a new Document::Writer, it has no pages.  You can add pages
+to the document using either C<add_page($page)> or C<next_page>.  If calling
+next_page to create your first page you'll need to provide a width and height
+(which can conveniently be gotten from C<get_paper_dimensions>).  Subsequent
+calls to C<next_page> will default the newly created page to the size of the
+last page in the document.
+
+
+=head1 WARNING
+
+This is an early release meant to shake support out of the underlying
+libraries.  Further abstractions are forthcoming to make adding content to the
+pages easier than using L<Graphics::Primitive> directly.
 
 =head1 METHODS
 
@@ -124,9 +270,17 @@ Add an already created page object to this document.
 
 Remove all pages from this document.
 
-=item I<components>
+=item I<current_page>
 
-Provided for compatability with Graphics::Primitive::Driver.
+The index of the current page.  This value is updated when calling next_page
+and is undefined when the document is created. TODO
+
+=item I<draw ($driver)>
+
+Convenience method that hides all the Graphics::Primitive magic when you
+give it a driver.  After this method completes the entire document will have
+been rendered into the driver.  You can retrieve the output by using
+L<Driver's|Graphics::Primitive::Driver> I<data> or I<write> methods.
 
 =item I<find_page ($name)>
 
@@ -145,10 +299,25 @@ as an array.  Uses L<Paper::Specs>.
 
 Returns the page at the given position
 
-=item I<height>
+=item I<get_tree>
 
-Returns the height of the first page, provided for compatibility with
-Graphics::Primitive.
+Returns a L<Forest::Tree> object with this document at it's root and each
+page (and it's children) as children.  Provided for convenience.
+
+=item I<next_page ([$width, $height])>
+
+Return the next page. Increments the C<current_page> by one.  If a page exists
+at that index it is returned.  If a page does not exist then a new page is
+added to this document.
+
+If there are pages already in the document then width and height information
+will be copied from the last page.  Prodiving width and height as arguments
+to this method override that behaviour and are necessary if there are no pages
+from which to copy it.
+
+Note: Color is copied from the last page.
+
+For less sugar use I<add_page>.
 
 =item I<page_count>
 
@@ -157,19 +326,6 @@ Get the number of pages in this document.
 =item I<pages>
 
 Get the pages in this document.
-
-=item I<turn_page>
-
-"Turn" to a new page by creating a new one and add it to the list of pages
-in this document.  If there are pages already in the document then the last
-one will be used to provided height and width information.
-
-For less sugar use I<add_page>.
-
-=item I<width>
-
-Returns the width of the first page, provided for compatibility with
-Graphics::Primitive.
 
 =back
 
