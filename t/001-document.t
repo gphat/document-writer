@@ -1,22 +1,30 @@
 use Test::More tests => 7;
 
+use Graphics::Color::RGB;
+
 use Document::Writer;
 use Document::Writer::Page;
 
-my $doc = Document::Writer->new;
+my $doc = Document::Writer->new(
+    default_color => Graphics::Color::RGB->new(red => 0, green => 0, blue => 0, alpha => 1)
+);
 isa_ok($doc, 'Document::Writer');
 
 my ($w, $h) = Document::Writer->get_paper_dimensions('letter');
 
 eval {
-    $doc->turn_page;
+    $doc->next_page;
 };
-ok($@ =~ /Need a height/, 'turn_page with no pages');
+ok($@ =~ /Need a height/, 'next_page with no pages');
 
 my $tpage = $doc->next_page($w, $h);
 cmp_ok($doc->page_count, '==', 1, '1 page');
 
-my $page = Document::Writer::Page->new(width => $w, height => $h);
+my $page = Document::Writer::Page->new(
+    width => $w,
+    height => $h,
+    color => Graphics::Color::RGB->new(red => 0, green => 0, blue => 0, alpha => 1)
+);
 isa_ok($page, 'Document::Writer::Page');
 
 $doc->add_page($page);

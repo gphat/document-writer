@@ -1,13 +1,18 @@
 use strict;
-use Test::More tests => 7;
+use Test::More tests => 3;
 use lib qw(lib t/lib);
 
 use Document::Writer;
 use Document::Writer::Page;
 
+use Graphics::Color::RGB;
+
 use MockDriver;
 
-my $doc = Document::Writer->new;
+my $doc = Document::Writer->new(
+    default_color => Graphics::Color::RGB->new(red => 0, green => 0, blue => 0, alpha => 1)
+);
+
 isa_ok($doc, 'Document::Writer');
 
 my $tpage = $doc->next_page(80, 5);
@@ -19,6 +24,4 @@ my $driver = MockDriver->new;
 
 $doc->add_text_to_page($driver, Graphics::Primitive::Font->new, $text);
 
-use Forest::Tree::Writer::ASCIIWithBranches;
-my $w = Forest::Tree::Writer::ASCIIWithBranches->new(tree => $doc->get_tree);
-print $w->as_string;
+cmp_ok($doc->page_count, '==', 6, '6 pages');
