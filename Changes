@@ -1,5 +1,10 @@
 Revision history for Document-Writer
 
+0.04
+  - Add default_color to Writer
+  - Remove accidental random background inclusion.
+  - Fix busted text wrapping
+
 0.03
   - Forget to make manifest
 

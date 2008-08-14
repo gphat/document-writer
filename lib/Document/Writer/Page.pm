@@ -15,7 +15,7 @@ use Graphics::Color::RGB;
 has 'body' => (
     is => 'rw',
     isa => 'Graphics::Primitive::Component',
-    lazy => 1,
+    # lazy => 1,
     default => sub {
         my ($self) = @_;
 
@@ -28,31 +28,10 @@ has 'color' => (
     is => 'rw',
     isa => 'Graphics::Color',
 );
-has '+components' => (
-    lazy => 1,
-    default => sub {
-        my ($self) = @_;
-
-        return [
-            {
-                component   => $self->header,
-                args        => 'n',
-            },
-            {
-                component   => $self->footer,
-                args        => 's'
-            },
-            {
-                component   => $self->body,
-                args        => 'c'
-            }
-        ];
-    }
-);
 has 'footer' => (
     is => 'rw',
     isa => 'Graphics::Primitive::Component',
-    lazy => 1,
+    # lazy => 1,
     default => sub {
         my ($self) = @_;
 
@@ -65,7 +44,7 @@ has 'footer' => (
 has 'header' => (
     is => 'rw',
     isa => 'Graphics::Primitive::Component',
-    lazy => 1,
+    # lazy => 1,
     default => sub {
         my ($self) = @_;
 
@@ -80,6 +59,14 @@ has 'header' => (
 # });
 has '+layout_manager' => ( default => sub { Layout::Manager::Compass->new });
 has '+page' => ( default => sub { 1 });
+
+sub BUILD {
+    my ($self) = @_;
+
+    $self->add_component($self->header, 'n');
+    $self->add_component($self->footer, 's');
+    $self->add_component($self->body, 'c');
+}
 
 override('prepare', sub {
     my ($self, $driver) = @_;

@@ -9,13 +9,17 @@ use Paper::Specs units => 'pt';
 use Document::Writer::TextLayout;
 
 our $AUTHORITY = 'cpan:GPHAT';
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
+has 'default_color' => (
+    is => 'rw',
+    isa => 'Graphics::Color',
+    required => 1
+);
 has 'current_page' => (
     is => 'rw',
     isa => 'Num',
 );
-
 has 'pages' => (
     metaclass => 'Collection::Array',
     is => 'rw',
@@ -57,8 +61,8 @@ sub add_text_to_page {
         my $avail = $curr_page->body->inside_height - $curr_page->body->layout_manager->used->[1];
         if($avail <= 0) {
             $curr_page = $self->next_page;
-            $curr_page->prepare;
-            $curr_page->layout_manager->do_layout($curr_page);
+            # $curr_page->prepare;
+            # $curr_page->layout_manager->do_layout($curr_page);
             next;
         }
         my $lsize = $avail;
@@ -71,8 +75,8 @@ sub add_text_to_page {
             # If we get back nothing then we must've asked for a size too
             # small to get back data.  Make a new page
             $curr_page = $self->next_page;
-            $curr_page->prepare;
-            $curr_page->layout_manager->do_layout($curr_page);
+            # $curr_page->prepare;
+            # $curr_page->layout_manager->do_layout($curr_page);
             next;
         }
 
@@ -83,7 +87,8 @@ sub add_text_to_page {
             minimum_width => $curr_page->width,
             minimum_height => $lines->{size}
         );
-        $tb->background_color(Graphics::Color::RGB->new(red => rand(1), green => rand(1), blue => rand(1), alpha => .25));
+        # XXX FIX ME
+        # $tb->background_color(Graphics::Color::RGB->new(red => rand(1), green => rand(1), blue => rand(1), alpha => .25));
         $curr_page->body->add_component($tb);
         $curr_page->prepare;
         $curr_page->layout_manager->do_layout($curr_page);
@@ -110,7 +115,7 @@ sub add_to_page {
     croak 'current_page refers to an undefined page' unless defined($page);
 
     if(ref($thing)) {
-        # $thing->prepare($driver);
+        $thing->prepare($driver);
     } else {
         # my $tb = Graphics::Primitive::TextBox->new(
         #     # TODO FIX ME
@@ -120,6 +125,18 @@ sub add_to_page {
         # );
         # $thing = $tb;
         # $tb->prepare($driver);
+    }
+
+    my $avail = $page->body->inside_height - $page->body->layout_manager->used->[1];
+    # Orientation?
+    if($avail < $thing->height) {
+        $page = $self->next_page;
+        # $page->prepare;
+        # $page->layout_manager->do_layout($page);
+
+        $self->add_to_page($driver, $thing);
+
+        return;
     }
 
     $page->body->add_component($thing);
@@ -140,6 +157,7 @@ sub draw {
     my ($self, $driver, $name) = @_;
 
     foreach my $p (@{ $self->pages }) {
+
         # Prepare all the pages...
         $driver->prepare($p);
         # Layout each page...
@@ -198,7 +216,8 @@ sub next_page {
     my $newpage;
     if($width && $height) {
         $newpage = Document::Writer::Page->new(
-            width => $width, height => $height
+            width => $width, height => $height,
+            color => $self->default_color
         );
     } else {
         my $currpage = $self->last_page;
@@ -213,6 +232,10 @@ sub next_page {
     }
     $self->add_page($newpage);
     $self->current_page(scalar(@{ $self->pages }) - 1);
+
+    $newpage->prepare;
+    $newpage->layout_manager->do_layout($newpage);
+
     return $newpage;
 }
 
