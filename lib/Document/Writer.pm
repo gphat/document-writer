@@ -9,7 +9,7 @@ use Paper::Specs units => 'pt';
 use Document::Writer::TextLayout;
 
 our $AUTHORITY = 'cpan:GPHAT';
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 has 'default_color' => (
     is => 'rw',
