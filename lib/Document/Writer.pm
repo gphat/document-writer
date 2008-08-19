@@ -114,17 +114,15 @@ sub add_to_page {
     my $page = $self->get_page($self->current_page);
     croak 'current_page refers to an undefined page' unless defined($page);
 
-    if(ref($thing)) {
+    # TODO orientation...
+    if($thing->height > $page->height) {
+        croak 'requested component is larger than page height';
+    }
+
+    if(ref($thing) && $thing->isa('Graphics::Primitive::Component')) {
         $thing->prepare($driver);
     } else {
-        # my $tb = Graphics::Primitive::TextBox->new(
-        #     # TODO FIX ME
-        #     color => Graphics::Color::RGB->new(red => 0, green => 0, blue => 0, alpha => 1),
-        #     text => $thing,
-        #     minimum_width => $page->inside_width
-        # );
-        # $thing = $tb;
-        # $tb->prepare($driver);
+        croak('add_to_page requires a Graphics::Primitive::Component');
     }
 
     my $avail = $page->body->inside_height - $page->body->layout_manager->used->[1];
@@ -168,6 +166,24 @@ sub draw {
         $driver->reset;
         $driver->draw($p);
     }
+}
+
+sub find {
+    my ($self, $predicate) = @_;
+
+    my $newlist = Graphics::Primitive::ComponentList->new;
+    foreach my $page (@{ $self->pages }) {
+
+        return unless(defined($page));
+
+        my $list = $page->find($predicate);
+        if(scalar(@{ $list->components })) {
+            $newlist->push_components(@{ $list->components });
+            $newlist->push_constraints(@{ $list->constraints });
+        }
+    }
+
+    return $newlist;
 }
 
 sub find_page {
@@ -251,10 +267,12 @@ Document::Writer - Library agnostic document creation
     # Use whatever you like
     use Graphics::Primitive::Driver::Cairo;
 
-    my $doc = Document::Writer->new;
+    my $doc = Document::Writer->new(
+        default_color => Graphics::Color::RGB->new(...)
+    );
     # Create the first page
     my $p = $doc->next_page(Document::Writer->get_paper_dimensions('letter'));
-    # ... Do something
+    $doc->add_text_to_page($long_multiline_text);
     my $p2 = $doc->next_page;
     # ... Do some other stuff
     $self->draw($driver);
@@ -274,7 +292,6 @@ next_page to create your first page you'll need to provide a width and height
 calls to C<next_page> will default the newly created page to the size of the
 last page in the document.
 
-
 =head1 WARNING
 
 This is an early release meant to shake support out of the underlying
@@ -284,6 +301,22 @@ pages easier than using L<Graphics::Primitive> directly.
 =head1 METHODS
 
 =over 4
+
+=item I<add_text_to_page ($driver, $font, $string, [$color])>
+
+Adds the text supplied to the current page.  Lines are automatically wrapped
+based on the current page's width.  If the text exceeds the space available
+on the current page then a new page will be created via C<next_page>.  This
+will be repeated until all the text has been added to the document.
+
+The supplied font will be used to determine how to display the text.
+
+=item I<add_to_page ($driver, $component)>
+
+Add a L<Graphics::Primitive::Component> to the page.  The component must
+have a width and height set.  If the component exceeds the space available
+on the current page then another page will be added via C<next_page>.  If the
+component is bigger than the current page size except bad things to happen.
 
 =item I<add_page ($page)>
 
@@ -338,7 +371,8 @@ will be copied from the last page.  Prodiving width and height as arguments
 to this method override that behaviour and are necessary if there are no pages
 from which to copy it.
 
-Note: Color is copied from the last page.
+Note: Color is copied from the last page.  If there is no last page then
+the C<default_color> is used.
 
 For less sugar use I<add_page>.
 

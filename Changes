@@ -1,9 +1,17 @@
 Revision history for Document-Writer
 
+0.05
+  - Add find to Document::Writer to emulate find of Graphics::Primitive
+  - POD updates
+  - Don't allow components to be added that are larger than the page
+  - Reset page header/footer/body on prepares
+
 0.04
   - Add default_color to Writer
   - Remove accidental random background inclusion.
   - Fix busted text wrapping
+  - POD updates
+  - Test fixes
 
 0.03
   - Forget to make manifest

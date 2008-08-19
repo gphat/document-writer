@@ -71,6 +71,12 @@ sub BUILD {
 override('prepare', sub {
     my ($self, $driver) = @_;
 
+    $self->component_list->clear;
+
+    $self->add_component($self->header, 'n');
+    $self->add_component($self->footer, 's');
+    $self->add_component($self->body, 'c');
+
     if(defined($self->header) && !$self->header->minimum_width) {
         $self->header->minimum_width($self->inside_width + $self->header->outside_width);
     }
@@ -92,14 +98,34 @@ Document::Writer::Page - A page in a document
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
     use Document::Writer;
 
-    my $foo = Document::Writer->new();
+    my $doc = Document::Writer->new(default_color => ...);
+    my $p = $doc->next_page($width, $height);
+    $p->add_text_to_page($driver, $font, $text);
     ...
+
+=head1 METHODS
+
+=over 4
+
+=item I<body>
+
+Set/Get this page's body container.
+
+=item I<footer>
+
+Set/Get this page's footer component.
+
+=item I<header>
+
+Set/Get this page's footer component.
+
+=item I<BUILD>
+
+Moose hackery, ignore me.
+
+=back
 
 =head1 AUTHOR
 
