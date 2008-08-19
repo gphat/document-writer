@@ -338,6 +338,25 @@ give it a driver.  After this method completes the entire document will have
 been rendered into the driver.  You can retrieve the output by using
 L<Driver's|Graphics::Primitive::Driver> I<data> or I<write> methods.
 
+=item I<find ($CODEREF)>
+
+Compatability and convenience method matching C<find> in
+Graphics::Primitive::Container.
+
+Returns a new ComponentList containing only the components for which the
+supplied CODEREF returns true.  The coderef is called for each component and
+is passed the component and it's constraints.  Undefined components (the ones
+left around after a remove_component) are automatically skipped.
+
+  my $flist = $list->find(
+    sub{
+      my ($component, $constraint) = @_; return $comp->class eq 'foo'
+    }
+  );
+
+If no matching components are found then a new list is returned so that simple
+calls liked $container->find(...)->each(...) don't explode.
+
 =item I<find_page ($name)>
 
 Finds a page by name, if it exists.
