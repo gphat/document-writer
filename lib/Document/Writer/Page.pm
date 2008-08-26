@@ -18,9 +18,9 @@ has 'body' => (
     # lazy => 1,
     default => sub {
         my ($self) = @_;
-
         Graphics::Primitive::Container->new(
-            layout_manager => Layout::Manager::Flow->new
+            layout_manager => Layout::Manager::Flow->new,
+            class => 'dw-body'
         )
     }
 );
@@ -37,7 +37,8 @@ has 'footer' => (
 
         Graphics::Primitive::TextBox->new(
             color => $self->color,
-            text => 'Footer'
+            text => 'Footer',
+            class => 'dw-footer'
         )
     }
 );
@@ -50,7 +51,8 @@ has 'header' => (
 
         Graphics::Primitive::TextBox->new(
             color => $self->color,
-            text => 'Header'
+            text => 'Header',
+            class => 'dw-header'
         )
     }
 );
@@ -71,11 +73,11 @@ sub BUILD {
 override('prepare', sub {
     my ($self, $driver) = @_;
 
-    $self->component_list->clear;
-
-    $self->add_component($self->header, 'n');
-    $self->add_component($self->footer, 's');
-    $self->add_component($self->body, 'c');
+    # $self->component_list->clear;
+    # 
+    # $self->add_component($self->header, 'n');
+    # $self->add_component($self->footer, 's');
+    # $self->add_component($self->body, 'c');
 
     if(defined($self->header) && !$self->header->minimum_width) {
         $self->header->minimum_width($self->inside_width + $self->header->outside_width);

@@ -6,10 +6,11 @@ use Carp;
 use Forest;
 use Paper::Specs units => 'pt';
 
+use Document::Writer::Page;
 use Document::Writer::TextLayout;
 
 our $AUTHORITY = 'cpan:GPHAT';
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 has 'default_color' => (
     is => 'rw',

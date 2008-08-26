@@ -8,6 +8,10 @@ has 'font' => (
     isa => 'Graphics::Primitive::Font',
     required => 1
 );
+has 'line_height' => (
+    is => 'rw',
+    isa => 'Num'
+);
 has 'lines' => (
     is => 'rw',
     isa => 'ArrayRef',
@@ -29,7 +33,8 @@ sub height {
 
     my $h = 0;
     foreach my $l (@{ $self->lines }) {
-        $h += $l->{cb}->height;
+        $h += defined($self->line_height)
+            ? $self->line_height : $l->{cb}->height;
     }
     return $h;
 }
@@ -39,6 +44,8 @@ sub layout {
 
     my $font = $self->font;
     my $width = $self->width;
+
+    $self->line_height($font->size);
 
     my $size;
     my $flow = Text::Flow->new(
@@ -83,12 +90,21 @@ sub slice {
         $size = $self->height;
     }
 
+    my $lh = defined($self->line_height)
+        ? $self->line_height : $self->font->size;
+
     my @new;
     my $accum = 0;
     my $found = 0;
     for(my $i = 0; $i < scalar(@{ $self->lines }); $i++) {
         my $l = $self->lines->[$i];
-        my $lh = $l->{cb}->height;
+        my $llh = $l->{cb}->height;
+
+        # If the 'local' line height is < the overall line height, use the
+        # overall one.
+        if($llh < $lh) {
+            $llh = $lh;
+        }
 
         if($accum < $offset) {
             $accum += $lh;

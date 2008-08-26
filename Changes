@@ -1,5 +1,11 @@
 Revision history for Document-Writer
 
+0.06
+  - use D:W:Page in Document::Writer
+  - Add classes to header, body and footer
+  - Take out component clearing in Page::prepare
+  - TextLayout: Add line_height and use font size by default
+
 0.05
   - Add find to Document::Writer to emulate find of Graphics::Primitive
   - POD updates
