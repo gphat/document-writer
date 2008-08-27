@@ -5,6 +5,7 @@ Revision history for Document-Writer
   - Add classes to header, body and footer
   - Take out component clearing in Page::prepare
   - TextLayout: Add line_height and use font size by default
+  - Set font size in tests, don't depend on defaults
 
 0.05
   - Add find to Document::Writer to emulate find of Graphics::Primitive

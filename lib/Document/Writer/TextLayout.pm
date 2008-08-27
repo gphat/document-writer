@@ -107,13 +107,13 @@ sub slice {
         }
 
         if($accum < $offset) {
-            $accum += $lh;
+            $accum += $llh;
             next;
         }
-        if(($accum + $lh) <= ($offset + $size)) {
+        if(($accum + $llh) <= ($offset + $size)) {
             push(@new, $l);
-            $accum += $lh;
-            $found += $lh;
+            $accum += $llh;
+            $found += $llh;
         }
     }
 
