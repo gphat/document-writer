@@ -39,8 +39,14 @@ has 'pages' => (
 sub add_text_to_page {
     my ($self, $driver, $font, $text, $color) = @_;
 
+
     my $curr_page = $self->get_page($self->current_page);
     # TODO Orientation...
+
+    unless(defined($driver->width)) {
+        $driver->width($curr_page->width);
+        $driver->height($curr_page->height);
+    }
 
     my $width = $curr_page->inside_width;
 
