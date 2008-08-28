@@ -1,5 +1,8 @@
 Revision history for Document-Writer
 
+0.07
+  - Init driver width & height early
+
 0.06
   - use D:W:Page in Document::Writer
   - Add classes to header, body and footer
