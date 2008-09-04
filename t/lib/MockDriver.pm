@@ -4,6 +4,9 @@ use Moose;
 
 use Geometry::Primitive::Rectangle;
 
+has 'height' => ( is => 'rw', isa => 'Num' );
+has 'width' => ( is => 'rw', isa => 'Num' );
+
 sub get_text_bounding_box {
     my ($self, $font, $text) = @_;
 
@@ -22,5 +25,7 @@ sub get_text_bounding_box {
         ),
     );
 }
+
+sub prepare {};
 
 1;
