@@ -15,7 +15,6 @@ use Graphics::Color::RGB;
 has 'body' => (
     is => 'rw',
     isa => 'Graphics::Primitive::Component',
-    # lazy => 1,
     default => sub {
         my ($self) = @_;
         Graphics::Primitive::Container->new(
@@ -31,13 +30,9 @@ has 'color' => (
 has 'footer' => (
     is => 'rw',
     isa => 'Graphics::Primitive::Component',
-    # lazy => 1,
     default => sub {
-        my ($self) = @_;
-
-        Graphics::Primitive::TextBox->new(
-            color => $self->color,
-            text => 'Footer',
+        return Graphics::Primitive::TextBox->new(
+            # text => 'Footer',
             class => 'dw-footer'
         )
     }
@@ -45,13 +40,9 @@ has 'footer' => (
 has 'header' => (
     is => 'rw',
     isa => 'Graphics::Primitive::Component',
-    # lazy => 1,
     default => sub {
-        my ($self) = @_;
-
-        Graphics::Primitive::TextBox->new(
-            color => $self->color,
-            text => 'Header',
+        return Graphics::Primitive::TextBox->new(
+            # text => 'Header',
             class => 'dw-header'
         )
     }
@@ -72,12 +63,6 @@ sub BUILD {
 
 override('prepare', sub {
     my ($self, $driver) = @_;
-
-    # $self->component_list->clear;
-    # 
-    # $self->add_component($self->header, 'n');
-    # $self->add_component($self->footer, 's');
-    # $self->add_component($self->body, 'c');
 
     if(defined($self->header) && !$self->header->minimum_width) {
         $self->header->minimum_width($self->inside_width + $self->header->outside_width);

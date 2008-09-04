@@ -39,7 +39,6 @@ has 'pages' => (
 sub add_text_to_page {
     my ($self, $driver, $font, $text, $color) = @_;
 
-
     my $curr_page = $self->get_page($self->current_page);
     # TODO Orientation...
 
@@ -53,7 +52,7 @@ sub add_text_to_page {
     my $tl = Document::Writer::TextLayout->new(
         font => $font,
         text => $text,
-        width => $width
+        width => $width,
     );
 
     $tl->layout($driver);
@@ -61,15 +60,14 @@ sub add_text_to_page {
     my $used = 0;
     my $tlh = $tl->height;
 
-    $curr_page->prepare;
-    $curr_page->do_layout($curr_page);
+    # XXX ?
+    $driver->prepare($curr_page);
+    $curr_page->layout_manager->do_layout($curr_page);
 
     while($used < $tlh) {
         my $avail = $curr_page->body->inside_height - $curr_page->body->layout_manager->used->[1];
         if($avail <= 0) {
             $curr_page = $self->next_page;
-            # $curr_page->prepare;
-            # $curr_page->layout_manager->do_layout($curr_page);
             next;
         }
         my $lsize = $avail;
@@ -79,6 +77,7 @@ sub add_text_to_page {
         my $lines = $tl->slice($used, $lsize);
 
         if($lines->{size} <= 0) {
+            # XXX
             # If we get back nothing then we must've asked for a size too
             # small to get back data.  Make a new page.  This will eventually
             # cause an endless loop...
@@ -96,7 +95,8 @@ sub add_text_to_page {
         # XXX FIX ME
         # $tb->background_color(Graphics::Color::RGB->new(red => rand(1), green => rand(1), blue => rand(1), alpha => .25));
         $curr_page->body->add_component($tb);
-        $curr_page->prepare;
+        $driver->prepare($curr_page);
+        # $curr_page->prepare;
         $curr_page->layout_manager->do_layout($curr_page);
         $used += $lines->{size};
     }
@@ -158,7 +158,7 @@ sub add_to_page {
 }
 
 sub draw {
-    my ($self, $driver, $name) = @_;
+    my ($self, $driver) = @_;
 
     foreach my $p (@{ $self->pages }) {
 
@@ -278,7 +278,7 @@ Document::Writer - Library agnostic document creation
     );
     # Create the first page
     my $p = $doc->next_page(Document::Writer->get_paper_dimensions('letter'));
-    $doc->add_text_to_page($long_multiline_text);
+    $doc->add_text_to_page($driver, $long_multiline_text);
     my $p2 = $doc->next_page;
     # ... Do some other stuff
     $self->draw($driver);
