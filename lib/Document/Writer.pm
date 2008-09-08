@@ -10,7 +10,7 @@ use Document::Writer::Page;
 use Document::Writer::TextLayout;
 
 our $AUTHORITY = 'cpan:GPHAT';
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 has 'default_color' => (
     is => 'rw',
