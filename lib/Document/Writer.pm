@@ -168,7 +168,7 @@ sub draw {
         if($p->layout_manager) {
             $p->layout_manager->do_layout($p);
         }
-        $driver->pack($p);
+        $driver->finalize($p);
         $driver->reset;
         $driver->draw($p);
     }
