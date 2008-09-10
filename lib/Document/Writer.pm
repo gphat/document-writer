@@ -12,155 +12,236 @@ use Document::Writer::TextLayout;
 our $AUTHORITY = 'cpan:GPHAT';
 our $VERSION = '0.08';
 
-has 'default_color' => (
-    is => 'rw',
-    isa => 'Graphics::Color',
-    required => 1
-);
-has 'current_page' => (
-    is => 'rw',
-    isa => 'Num',
-);
-has 'pages' => (
+has 'components' => (
     metaclass => 'Collection::Array',
     is => 'rw',
-    isa => 'ArrayRef[Document::Writer::Page]',
+    isa => 'ArrayRef[Graphics::Primitive::Component]',
     default => sub { [] },
     provides => {
-        'clear'=> 'clear_pages',
-        'count'=> 'page_count',
-        'get' => 'get_page',
-        'push' => 'add_page',
-        'first'=> 'first_page',
-        'last' => 'last_page'
+        'clear'=> 'clear_components',
+        'count'=> 'component_count',
+        'get' => 'get_component',
+        'push' => 'add_component',
+        'first'=> 'first_component',
+        'last' => 'last_component'
     }
 );
+has 'last_page' => (
+    is => 'rw',
+    isa => 'Document::Writer::Page',
+);
 
-sub add_text_to_page {
-    my ($self, $driver, $font, $text, $color) = @_;
+# sub add_text_to_page {
+#     my ($self, $driver, $font, $text, $color) = @_;
+# 
+#     my $curr_page = $self->get_page($self->current_page);
+#     # TODO Orientation...
+# 
+#     unless(defined($driver->width)) {
+#         $driver->width($curr_page->width);
+#         $driver->height($curr_page->height);
+#     }
+# 
+#     my $width = $curr_page->inside_width;
+# 
+#     unless(defined($color)) {
+#         $color = $self->default_color;
+#     }
+# 
+#     my $tb = Graphics::Primitive::TextBox->new(
+#         color => $color
+#         font => $font,
+#         text => $text,
+#         width => $width
+#     );
+# 
+#     $tl->layout;
+# 
+#     my $used = 0;
+#     my $tlh = $tl->height;
+# 
+#     # XXX ?
+#     $driver->prepare($curr_page);
+#     $curr_page->layout_manager->do_layout($curr_page);
+# 
+#     while($used < $tlh) {
+#         my $avail = $curr_page->body->inside_height - $curr_page->body->layout_manager->used->[1];
+#         if($avail <= 0) {
+#             $curr_page = $self->next_page;
+#             next;
+#         }
+#         my $lsize = $avail;
+#         if($tlh < $used + $avail) {
+#             $lsize = $tlh - $used;
+#         }
+#         my $lines = $tl->slice($used, $lsize);
+# 
+#         if($lines->{size} <= 0) {
+#             # XXX
+#             # If we get back nothing then we must've asked for a size too
+#             # small to get back data.  Make a new page.  This will eventually
+#             # cause an endless loop...
+#             $curr_page = $self->next_page;
+#             next;
+#         }
+# 
+#         my $tb = Graphics::Primitive::TextBox->new(
+#             color => defined($color) ? $color : $curr_page->color,
+#             font => $font,
+#             lines => $lines->{lines},
+#             minimum_width => $curr_page->width,
+#             minimum_height => $lines->{size}
+#         );
+#         # XXX FIX ME
+#         # $tb->background_color(Graphics::Color::RGB->new(red => rand(1), green => rand(1), blue => rand(1), alpha => .25));
+#         $curr_page->body->add_component($tb);
+#         $driver->prepare($curr_page);
+#         # $curr_page->prepare;
+#         $curr_page->layout_manager->do_layout($curr_page);
+#         $used += $lines->{size};
+#     }
+# }
 
-    my $curr_page = $self->get_page($self->current_page);
-    # TODO Orientation...
-
-    unless(defined($driver->width)) {
-        $driver->width($curr_page->width);
-        $driver->height($curr_page->height);
-    }
-
-    my $width = $curr_page->inside_width;
-
-    my $tl = Document::Writer::TextLayout->new(
-        font => $font,
-        text => $text,
-        width => $width,
-    );
-
-    $tl->layout($driver);
-
-    my $used = 0;
-    my $tlh = $tl->height;
-
-    # XXX ?
-    $driver->prepare($curr_page);
-    $curr_page->layout_manager->do_layout($curr_page);
-
-    while($used < $tlh) {
-        my $avail = $curr_page->body->inside_height - $curr_page->body->layout_manager->used->[1];
-        if($avail <= 0) {
-            $curr_page = $self->next_page;
-            next;
-        }
-        my $lsize = $avail;
-        if($tlh < $used + $avail) {
-            $lsize = $tlh - $used;
-        }
-        my $lines = $tl->slice($used, $lsize);
-
-        if($lines->{size} <= 0) {
-            # XXX
-            # If we get back nothing then we must've asked for a size too
-            # small to get back data.  Make a new page.  This will eventually
-            # cause an endless loop...
-            $curr_page = $self->next_page;
-            next;
-        }
-
-        my $tb = Graphics::Primitive::TextBox->new(
-            color => defined($color) ? $color : $curr_page->color,
-            font => $font,
-            lines => $lines->{lines},
-            minimum_width => $curr_page->width,
-            minimum_height => $lines->{size}
-        );
-        # XXX FIX ME
-        # $tb->background_color(Graphics::Color::RGB->new(red => rand(1), green => rand(1), blue => rand(1), alpha => .25));
-        $curr_page->body->add_component($tb);
-        $driver->prepare($curr_page);
-        # $curr_page->prepare;
-        $curr_page->layout_manager->do_layout($curr_page);
-        $used += $lines->{size};
-    }
-}
-
-sub add_to_page {
-    my ($self, $driver, $thing) = @_;
-
-    return unless defined($thing);
-
-    # If current_page isn't set, assume they want to operate on the last page.
-    unless(defined($self->current_page)) {
-        $self->current_page(scalar(@{ $self->pages }) - 1);
-    }
-    unless(defined($self->current_page)) {
-        # Well, shit. We still don't have a page.  Bitch about it since we
-        # can't create one without a size.
-        croak('No pages to add to.');
-    }
-
-    my $page = $self->get_page($self->current_page);
-    croak 'current_page refers to an undefined page' unless defined($page);
-
-    # TODO orientation...
-    if($thing->height > $page->height) {
-        croak 'requested component is larger than page height';
-    }
-
-    if(ref($thing) && $thing->isa('Graphics::Primitive::Component')) {
-        $thing->prepare($driver);
-    } else {
-        croak('add_to_page requires a Graphics::Primitive::Component');
-    }
-
-    my $avail = $page->body->inside_height - $page->body->layout_manager->used->[1];
-    # Orientation?
-    if($avail < $thing->height) {
-        $page = $self->next_page;
-        # $page->prepare;
-        # $page->layout_manager->do_layout($page);
-
-        $self->add_to_page($driver, $thing);
-
-        return;
-    }
-
-    $page->body->add_component($thing);
-    $page->prepare;
-    $page->layout_manager->do_layout($page);
-
-    # TODO FIx avail and new page!
-
-    # if($page->layout_manager->overflow) {
-    #     # We overflowed.  Time to move to the next page and try there.
-    #     $page->pop_component;
-    #     $self->next_page;
-    #     $self->add_to_page($thing);
-    # }
-}
+# sub add_to_page {
+#     my ($self, $driver, $thing) = @_;
+# 
+#     return unless defined($thing);
+# 
+#     # If current_page isn't set, assume they want to operate on the last page.
+#     unless(defined($self->current_page)) {
+#         $self->current_page(scalar(@{ $self->pages }) - 1);
+#     }
+#     unless(defined($self->current_page)) {
+#         # Well, shit. We still don't have a page.  Bitch about it since we
+#         # can't create one without a size.
+#         croak('No pages to add to.');
+#     }
+# 
+#     my $page = $self->get_page($self->current_page);
+#     croak 'current_page refers to an undefined page' unless defined($page);
+# 
+#     # TODO orientation...
+#     if($thing->height > $page->height) {
+#         croak 'requested component is larger than page height';
+#     }
+# 
+#     if(ref($thing) && $thing->isa('Graphics::Primitive::Component')) {
+#         $thing->prepare($driver);
+#     } else {
+#         croak('add_to_page requires a Graphics::Primitive::Component');
+#     }
+# 
+#     my $avail = $page->body->inside_height - $page->body->layout_manager->used->[1];
+#     # Orientation?
+#     if($avail < $thing->height) {
+#         $page = $self->next_page;
+#         # $page->prepare;
+#         # $page->layout_manager->do_layout($page);
+# 
+#         $self->add_to_page($driver, $thing);
+# 
+#         return;
+#     }
+# 
+#     $page->body->add_component($thing);
+#     $page->prepare;
+#     $page->layout_manager->do_layout($page);
+# 
+#     # TODO FIx avail and new page!
+# 
+#     # if($page->layout_manager->overflow) {
+#     #     # We overflowed.  Time to move to the next page and try there.
+#     #     $page->pop_component;
+#     #     $self->next_page;
+#     #     $self->add_to_page($thing);
+#     # }
+# }
 
 sub draw {
     my ($self, $driver) = @_;
 
-    foreach my $p (@{ $self->pages }) {
+    my @pages;
+    foreach my $c (@{ $self->components }) {
+
+        # print "$c\n";
+
+        next unless(defined($c));
+
+        $driver->prepare($c);
+
+        if($c->isa('Document::Writer::Page')) {
+            $driver->prepare($c);
+            $c->layout_manager->do_layout($c);
+
+            push(@pages, $c);
+        } else {
+            #  Seed the current page
+            my $currpage = $pages[-1];
+
+            die('First component must be a Page') unless defined($currpage);
+
+            if($c->isa('Document::Writer::TextArea')) {
+                $c->width($currpage->inside_width);
+                my $layout = $driver->get_textbox_layout($c);
+                $layout->layout;
+                my $lh = $layout->height;
+
+                my $used = 0;
+
+                while($used < $lh) {
+                    my $avail = $currpage->body->inside_height
+                        - $currpage->body->layout_manager->used->[1];
+                    # print "BH: ".$currpage->body->inside_height."\n";
+                    # print "AVAIL: $avail\n";
+                    if($avail == 0) {
+                        $currpage = $self->add_page_break;
+                        push(@pages, $currpage);
+                        $driver->prepare($currpage);
+                        $currpage->layout_manager->do_layout($currpage);
+                        $avail = $currpage->body->inside_height
+                            - $currpage->body->layout_manager->used->[1];
+                        next;
+                    }
+
+                    if($avail > $layout->height) {
+                        # print "A\n";
+                        my $tb = $layout->slice($used);
+                        $currpage->body->add_component($tb);
+                        $used += $tb->minimum_height;
+                    } else {
+                        # print "B\n";
+                        my $tb = $layout->slice($used, $avail);
+                        print $tb->minimum_height."\n";
+                        $currpage->body->add_component($tb);
+                        $used += $tb->minimum_height;
+                    }
+                    # print "A: $avail, U: $used, H: $lh\n";
+                    $driver->prepare($currpage);
+                    $currpage->layout_manager->do_layout($currpage);
+                    $currpage = $self->add_page_break;
+                }
+            } else {
+                my $pageadded = 0 ;
+                my $avail = $currpage->body->inside_height
+                    - $currpage->body->layout_manager->used->[1];
+                if($avail >= $c->height) {
+                    $currpage->add_component($c);
+                    $driver->prepare($c);
+                    $c->layout_manager->do_layout($c);
+                } else {
+                    if($pageadded) {
+                        die("Stopping possible endless loop: $c too big for page");
+                    }
+                    $pageadded = 1;
+                    $self->add_page_break;
+                    push(@pages, $currpage);
+                }
+            }
+        }
+    }
+
+    # print "P: ".scalar(@pages)."\n";
+    foreach my $p (@pages) {
 
         # Prepare all the pages...
         $driver->prepare($p);
@@ -171,7 +252,12 @@ sub draw {
         $driver->finalize($p);
         $driver->reset;
         $driver->draw($p);
+        # use Forest::Tree::Writer::ASCIIWithBranches;
+        # my $t = Forest::Tree::Writer::ASCIIWithBranches->new(tree => $p->get_tree);
+        # print $t->as_string;
     }
+
+    return \@pages;
 }
 
 sub find {
@@ -224,42 +310,62 @@ sub get_tree {
     return $tree;
 }
 
-sub next_page {
-    my ($self, $width, $height) = @_;
+sub add_page_break {
+    my ($self, $page) = @_;
 
-    if(defined($self->current_page)) {
-        my $epage = $self->pages->[$self->current_page + 1];
-        if(defined($epage)) {
-            $self->current_page($self->current_page + 1);
-            return $epage;
-        }
-    }
-
-    my $newpage;
-    if($width && $height) {
-        $newpage = Document::Writer::Page->new(
-            width => $width, height => $height,
-            color => $self->default_color
-        );
+    if(defined($page)) {
+        $self->add_component($page);
+        $self->last_page($page);
     } else {
-        my $currpage = $self->last_page;
-        if($currpage) {
-            $newpage = Document::Writer::Page->new(
-                color => $currpage->color,
-                width => $currpage->width, height => $currpage->height
-            );
-        } else {
-            croak("Need a height and width for first page.");
-        }
+        die('Must add a first page to create implicit ones.') unless defined($self->last_page);
+        my $last = $self->last_page;
+        $self->last_page(Document::Writer::Page->new(
+            color   => $last->color,
+            width   => $last->width,
+            height  => $last->height,
+        ));
     }
-    $self->add_page($newpage);
-    $self->current_page(scalar(@{ $self->pages }) - 1);
 
-    $newpage->prepare;
-    $newpage->layout_manager->do_layout($newpage);
-
-    return $newpage;
+    return $self->last_page;
 }
+
+
+# sub next_page {
+#     my ($self, $width, $height) = @_;
+# 
+#     if(defined($self->current_page)) {
+#         my $epage = $self->pages->[$self->current_page + 1];
+#         if(defined($epage)) {
+#             $self->current_page($self->current_page + 1);
+#             return $epage;
+#         }
+#     }
+# 
+#     my $newpage;
+#     if($width && $height) {
+#         $newpage = Document::Writer::Page->new(
+#             width => $width, height => $height,
+#             color => $self->default_color
+#         );
+#     } else {
+#         my $currpage = $self->last_page;
+#         if($currpage) {
+#             $newpage = Document::Writer::Page->new(
+#                 color => $currpage->color,
+#                 width => $currpage->width, height => $currpage->height
+#             );
+#         } else {
+#             croak("Need a height and width for first page.");
+#         }
+#     }
+#     $self->add_page($newpage);
+#     $self->current_page(scalar(@{ $self->pages }) - 1);
+# 
+#     $newpage->prepare;
+#     $newpage->layout_manager->do_layout($newpage);
+# 
+#     return $newpage;
+# }
 
 1;
 __END__

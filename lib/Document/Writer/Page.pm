@@ -8,9 +8,7 @@ use Graphics::Primitive::TextBox;
 use Layout::Manager::Compass;
 use Layout::Manager::Flow;
 
-# FIXME, make header/footer/body lazy and make a required color that is the
-# 'default' color for the page...
-use Graphics::Color::RGB;
+# use Graphics::Color::RGB;
 
 has 'body' => (
     is => 'rw',
