@@ -3,6 +3,8 @@ use Moose;
 
 extends 'Graphics::Primitive::TextBox';
 
+__PACKAGE__->meta->make_immutable;
+
 1;
 __END__
 =head1 NAME
