@@ -28,18 +28,18 @@ my $page = Document::Writer::Page->new(
 $doc->add_page_break($page);
 cmp_ok($doc->component_count, '==', 1, '1 component');
 
-my $page = Document::Writer::Page->new(
+my $page2 = Document::Writer::Page->new(
     width => $w,
     height => $h,
     color => Graphics::Color::RGB->new(
         red => 0, green => 0, blue => 0, alpha => 1
     )
 );
-isa_ok($page, 'Document::Writer::Page');
+isa_ok($page2, 'Document::Writer::Page');
 
-$doc->add_page_break($page);
+$doc->add_page_break($page2);
 cmp_ok($doc->component_count, '==', 2, '2 pages');
 
 my $newpage = $doc->add_page_break;
-cmp_ok($newpage->width, '==', $page->width, 'new page width');
-cmp_ok($newpage->height, '==', $page->height, 'new page height');
+cmp_ok($newpage->width, '==', $page2->width, 'new page width');
+cmp_ok($newpage->height, '==', $page2->height, 'new page height');

@@ -211,7 +211,7 @@ sub draw {
                     } else {
                         # print "B\n";
                         my $tb = $layout->slice($used, $avail);
-                        print $tb->minimum_height."\n";
+                        # print $tb->minimum_height."\n";
                         $currpage->body->add_component($tb);
                         $used += $tb->minimum_height;
                     }
