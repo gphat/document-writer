@@ -367,6 +367,8 @@ sub add_page_break {
 #     return $newpage;
 # }
 
+__PACKAGE__->meta->make_immutable;
+
 1;
 __END__
 =head1 NAME
