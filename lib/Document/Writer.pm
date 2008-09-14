@@ -190,7 +190,7 @@ sub draw {
                     my $avail = $currpage->body->inside_height
                         - $currpage->body->layout_manager->used->[1];
                     if($avail == 0) {
-                        $currpage = $self->add_page_break;
+                        $currpage = $self->add_page_break($driver);
                         push(@pages, $currpage);
                         $driver->prepare($currpage);
                         $currpage->layout_manager->do_layout($currpage);
@@ -214,7 +214,7 @@ sub draw {
                     }
                     $driver->prepare($currpage);
                     $currpage->layout_manager->do_layout($currpage);
-                    $currpage = $self->add_page_break;
+                    $currpage = $self->add_page_break($driver);
                 }
             } else {
                 my $pageadded = 0 ;
@@ -229,7 +229,7 @@ sub draw {
                         die("Stopping possible endless loop: $c too big for page");
                     }
                     $pageadded = 1;
-                    $self->add_page_break;
+                    $self->add_page_break($driver);
                     push(@pages, $currpage);
                 }
             }
@@ -300,24 +300,28 @@ sub get_tree {
 }
 
 sub add_page_break {
-    my ($self, $page) = @_;
+    my ($self, $driver, $page) = @_;
 
+    my $newpage;
     if(defined($page)) {
-        $self->add_component($page);
-        $self->last_page($page);
+        $newpage = $page;
     } else {
         die('Must add a first page to create implicit ones.') unless defined($self->last_page);
         my $last = $self->last_page;
-        my $newpage = Document::Writer::Page->new(
+        $newpage = Document::Writer::Page->new(
             color   => $last->color,
             width   => $last->width,
             height  => $last->height,
         );
-        $self->add_component($newpage);
-        $self->last_page($newpage);
     }
 
-    return $self->last_page;
+    $driver->prepare($newpage);
+    $newpage->layout_manager->do_layout($newpage);
+
+    $self->add_component($newpage);
+    $self->last_page($newpage);
+
+    return $newpage;
 }
 
 
