@@ -7,7 +7,7 @@ use Forest;
 use Paper::Specs units => 'pt';
 
 use Document::Writer::Page;
-use Document::Writer::TextLayout;
+# use Document::Writer::TextLayout;
 
 our $AUTHORITY = 'cpan:GPHAT';
 our $VERSION = '0.08';
@@ -163,8 +163,6 @@ sub draw {
     my @pages;
     foreach my $c (@{ $self->components }) {
 
-        # print "$c\n";
-
         next unless(defined($c));
 
         $driver->prepare($c);
@@ -183,7 +181,7 @@ sub draw {
             if($c->isa('Document::Writer::TextArea')) {
                 $c->width($currpage->inside_width);
                 my $layout = $driver->get_textbox_layout($c);
-                $layout->layout;
+                # $layout->layout;
                 my $lh = $layout->height;
 
                 my $used = 0;
@@ -191,8 +189,6 @@ sub draw {
                 while($used < $lh) {
                     my $avail = $currpage->body->inside_height
                         - $currpage->body->layout_manager->used->[1];
-                    # print "BH: ".$currpage->body->inside_height."\n";
-                    # print "AVAIL: $avail\n";
                     if($avail == 0) {
                         $currpage = $self->add_page_break;
                         push(@pages, $currpage);
@@ -204,18 +200,18 @@ sub draw {
                     }
 
                     if($avail > $layout->height) {
-                        # print "A\n";
                         my $tb = $layout->slice($used);
                         $currpage->body->add_component($tb);
+
                         $used += $tb->minimum_height;
                     } else {
-                        # print "B\n";
+                        print "B\n";
                         my $tb = $layout->slice($used, $avail);
-                        # print $tb->minimum_height."\n";
+                        print "AXXX: $used $avail\n";
+                        print "MH: ".$tb->minimum_height."\n";
                         $currpage->body->add_component($tb);
                         $used += $tb->minimum_height;
                     }
-                    # print "A: $avail, U: $used, H: $lh\n";
                     $driver->prepare($currpage);
                     $currpage->layout_manager->do_layout($currpage);
                     $currpage = $self->add_page_break;
@@ -240,7 +236,6 @@ sub draw {
         }
     }
 
-    # print "P: ".scalar(@pages)."\n";
     foreach my $p (@pages) {
 
         # Prepare all the pages...
@@ -264,11 +259,14 @@ sub find {
     my ($self, $predicate) = @_;
 
     my $newlist = Graphics::Primitive::ComponentList->new;
-    foreach my $page (@{ $self->pages }) {
+    foreach my $c (@{ $self->components }) {
 
-        return unless(defined($page));
+        return unless(defined($c));
 
-        my $list = $page->find($predicate);
+        unless($c->can('components')) {
+            return $newlist;
+        }
+        my $list = $c->find($predicate);
         if(scalar(@{ $list->components })) {
             $newlist->push_components(@{ $list->components });
             $newlist->push_constraints(@{ $list->constraints });
@@ -276,15 +274,6 @@ sub find {
     }
 
     return $newlist;
-}
-
-sub find_page {
-    my ($self, $name) = @_;
-
-    foreach my $p ($self->pages) {
-        return $p if($p->name eq $name);
-    }
-    return undef;
 }
 
 sub get_paper_dimensions {
@@ -303,8 +292,8 @@ sub get_tree {
 
     my $tree = Forest::Tree->new(node => $self);
 
-    foreach my $p (@{ $self->pages }) {
-        $tree->add_child($p->get_tree);
+    foreach my $c (@{ $self->components }) {
+        $tree->add_child($c->get_tree);
     }
 
     return $tree;
@@ -319,11 +308,13 @@ sub add_page_break {
     } else {
         die('Must add a first page to create implicit ones.') unless defined($self->last_page);
         my $last = $self->last_page;
-        $self->last_page(Document::Writer::Page->new(
+        my $newpage = Document::Writer::Page->new(
             color   => $last->color,
             width   => $last->width,
             height  => $last->height,
-        ));
+        );
+        $self->add_component($newpage);
+        $self->last_page($newpage);
     }
 
     return $self->last_page;
