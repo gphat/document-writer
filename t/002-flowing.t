@@ -11,6 +11,7 @@ use Graphics::Color::RGB;
 use MockDriver;
 
 my $doc = Document::Writer->new;
+my $driver = MockDriver->new;
 
 isa_ok($doc, 'Document::Writer');
 
@@ -19,7 +20,7 @@ my $page = Document::Writer::Page->new(
     width => 80, height => 3
 );
 
-$doc->add_page_break($page);
+$doc->add_page_break($driver, $page);
 cmp_ok($doc->component_count, '==', 1, '1 page');
 
 my $ta = Document::Writer::TextArea->new(
@@ -28,7 +29,6 @@ my $ta = Document::Writer::TextArea->new(
 
 $doc->add_component($ta);
 
-my $driver = MockDriver->new;
 my $pages = $doc->draw($driver);
 
 cmp_ok(scalar(@{ $pages }), '==', 2, '2 pages');

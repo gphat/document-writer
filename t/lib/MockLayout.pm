@@ -2,6 +2,8 @@ package # Hide from CPAN
     MockLayout;
 use Moose;
 
+with 'Graphics::Primitive::Driver::TextLayout';
+
 has 'component' => (
     is => 'rw',
     isa => 'Graphics::Primitive::TextBox'

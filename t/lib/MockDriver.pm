@@ -47,7 +47,11 @@ sub _draw_arc { }
 
 sub _draw_canvas { }
 
+sub _draw_circle { }
+
 sub _draw_component { }
+
+sub _draw_ellipse { }
 
 sub _draw_line { }
 
@@ -64,8 +68,6 @@ sub _finish_page { }
 sub _resize { }
 
 sub data { }
-
-sub get_text_bounding_box { }
 
 sub reset { }
 
