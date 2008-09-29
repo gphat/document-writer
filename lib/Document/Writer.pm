@@ -41,7 +41,7 @@ sub draw {
         $driver->prepare($c);
 
         if($c->isa('Document::Writer::Page')) {
-            $driver->prepare($c);
+            # $driver->prepare($c);
             $c->layout_manager->do_layout($c);
 
             push(@pages, $c);
@@ -54,7 +54,6 @@ sub draw {
             if($c->isa('Document::Writer::TextArea')) {
                 $c->width($currpage->inside_width);
                 my $layout = $driver->get_textbox_layout($c);
-                # $layout->layout;
                 my $lh = $layout->height;
 
                 my $used = 0;
