@@ -57,7 +57,8 @@ sub slice {
     return Graphics::Primitive::TextBox->new(
         minimum_width => $self->width,
         minimum_height => $using,
-        lines => \@lines
+        lines => \@lines,
+        size => $using
     );
 }
 

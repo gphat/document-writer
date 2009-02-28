@@ -22,31 +22,25 @@ Document::Writer::Page - A page in a document
 
 =head1 METHODS
 
-=over 4
-
-=item I<body>
+=head2 body
 
 Set/Get this page's body container.
 
-=item I<footer>
+=head2 footer
 
 Set/Get this page's footer component.
 
-=item I<header>
+=head2 header
 
 Set/Get this page's footer component.
 
-=item I<BUILD>
+=head2 BUILD
 
 Moose hackery, ignore me.
-
-=back
 
 =head1 AUTHOR
 
 Cory Watson, C<< <gphat@cpan.org> >>
-
-Infinity Interactive, L<http://www.iinteractive.com>
 
 =head1 BUGS
 
@@ -55,10 +49,6 @@ the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Geometry-P
 automatically be notified of progress on your bug as I make changes.
 
 =head1 COPYRIGHT & LICENSE
-
-Copyright 2008 by Infinity Interactive, Inc.
-
-L<http://www.iinteractive.com>
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

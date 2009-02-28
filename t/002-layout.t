@@ -18,18 +18,18 @@ my $tb = Document::Writer::TextArea->new(
     text => $text
 );
 
-my $driver = new MockDriver;
+my $driver = MockDriver->new;
 my $tl = $driver->get_textbox_layout($tb);
 $tl->layout($driver);
 
 cmp_ok($tl->height, '==', 7, '7 height');
 
 my $ret = $tl->slice(0, 5);
-cmp_ok($ret->{size}, '<=', 5, '0 offset, 5 size');
+cmp_ok($ret->minimum_height, '<=', 5, '0 offset, 5 size');
 my $ret2 = $tl->slice(3, 2);
-cmp_ok($ret2->{size}, '==', 0, '3 offset, 2 size');
+cmp_ok($ret2->minimum_height, '==', 2, '3 offset, 2 size');
 my $ret3 = $tl->slice(4, 1);
-cmp_ok($ret3->{size}, '==', 0, '4 offset, 1 size');
+cmp_ok($ret3->minimum_height, '==', 1, '4 offset, 1 size');
 
 # 
 my $lines3 = $tl->slice(4);

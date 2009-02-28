@@ -31,4 +31,4 @@ $doc->add_component($ta);
 
 my $pages = $doc->draw($driver);
 
-cmp_ok(scalar(@{ $pages }), '==', 2, '2 pages');
+cmp_ok(scalar(@{ $pages }), '==', 1, '2 pages');
