@@ -9,7 +9,7 @@ use Paper::Specs units => 'pt';
 use Document::Writer::Page;
 
 our $AUTHORITY = 'cpan:GPHAT';
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 has 'components' => (
     metaclass => 'Collection::Array',
@@ -54,16 +54,28 @@ sub draw {
             my $tlh = $tl->height;
             my $used = 0;
 
+            # This is around to keep control of runaway page adding.  We
+            # should never end up with an empty page.
+            my $newpage = 0;
             # So.  We need to 'use' all of the TextLayout we got.  The height
             # is $tlh and we have $avail space available on the page.
             while($used < $tlh) {
-                # We've not yet used all of the TextLayout
-                if(($avail <= 0) || ($avail < $tlh)) {
-                    # If we ran out of available space then we need to add a
+                # We've not yet used all of the TextLayout...
+                if($avail <= 0) {
+
+                    # Stop runaway page adding.
+                    if($newpage >= 1) {
+                        last;
+                    }
+
+                    # But we ran out of available space. So we need to add a
                     # new page.  We do this at the top so that we don't add
                     # a new page on the last iteration and then never use it!
                     $page = $self->add_page_break($driver);
-                    $avail = $page->body->inside_height
+                    $avail = $page->body->inside_height - $page->body->layout_manager->used->[1];
+                    $newpage += 1;
+                } else {
+                    $newpage = 0;
                 }
 
                 # Ask the TL to slice off a chunk.  Ask it for however much
@@ -71,23 +83,36 @@ sub draw {
                 # that much, it will give us all it has.  If it has more, we'll
                 # re-loop.
                 my $new_ta = $tl->slice($used, $avail);
-                $used += $new_ta->height;
 
-                # Add whatever we got to the page body.
-                $page->body->add_component($new_ta, 'n');
-                # Relayout the page.
-                $page->layout_manager->do_layout($page);
-
-                # Get the new avail
-                $avail = $page->body->inside_height - $page->body->layout_manager->used->[1];
+                if(defined($new_ta)) {
+                    $used += $new_ta->height;
+                    # Add whatever we got to the page body.
+                    $page->body->add_component($new_ta, 'n');
+                    # Relayout the page.
+                    $page->layout_manager->do_layout($page);
+                    # Get the new avail
+                    $avail = $page->body->inside_height - $page->body->layout_manager->used->[1];
+                } else {
+                    $avail = 0;
+                }
             }
+
         } elsif($c->isa('Graphics::Primitive::Container')) {
-            print "## Container\n";
+
+            my $page = $self->last_page;
+            my $avail = $page->body->inside_height - $page->body->layout_manager->used->[1];
+
+            $driver->prepare($c);
+            if($avail < $c->minimum_height) {
+                $page = $self->add_page_break($driver);
+                $avail = $page->body->inside_height;
+            }
+            $page->body->add_component($c, 'n');
+            $page->layout_manager->do_layout($page);
         }
     }
 
     foreach my $p (@pages) {
-        print "### P\n";
         # Prepare all the pages...
         $driver->prepare($p);
         # Layout each page...
@@ -206,8 +231,12 @@ Document::Writer - Library agnostic document creation
     my $textarea = Document::Writer::TextArea->new(
         text => 'Lorem ipsum...'
     );
+    $textarea->font->size(13);
+    $textarea->padding(10);
+    $textarea->line_height(17);
+
     $doc->add_component($textarea);
-    $self->draw($driver);
+    $doc->draw($driver);
     $driver->write('/Users/gphat/foo.pdf');
 
 =head1 DESCRIPTION
@@ -223,6 +252,12 @@ time this is called, a page must be supplied.  Subsequent calls will clone the
 last page that was passed in.  If you add components to the document, then
 they will automatically be paginated at render time, if necessary.  You only
 need to add the first page and any manual page breaks.
+
+=head1 NOTICE
+
+Document::Writer is a hobby project that I work on in my spare time.  It's
+yet to be used for any real work and it's likely I've forgotten something
+important.  Free free to contact me via IRC or email if you run into problems.
 
 =head1 METHODS
 
