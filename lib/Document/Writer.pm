@@ -9,7 +9,7 @@ use Paper::Specs units => 'pt';
 use Document::Writer::Page;
 
 our $AUTHORITY = 'cpan:GPHAT';
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 has 'components' => (
     metaclass => 'Collection::Array',
