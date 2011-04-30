@@ -9,7 +9,7 @@ use Paper::Specs units => 'pt';
 use Document::Writer::Page;
 
 our $AUTHORITY = 'cpan:GPHAT';
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 has 'components' => (
     metaclass => 'Collection::Array',
@@ -124,10 +124,6 @@ sub draw {
         $driver->finalize($p);
         $driver->reset;
         $driver->draw($p);
-
-        use Forest::Tree::Writer::ASCIIWithBranches;
-        my $t = Forest::Tree::Writer::ASCIIWithBranches->new(tree => $p->get_tree);
-        print $t->as_string;
     }
 
     return \@pages;

@@ -1,5 +1,8 @@
 Revision history for Document-Writer
 
+0.13
+  - Remove debugging output
+
 0.12
   - Lots of line-level fixes for textareas
 
